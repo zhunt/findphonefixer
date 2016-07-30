@@ -50,6 +50,7 @@ $cakeDescription = 'CakePHP: the rapid development PHP framework';
         <div class="row">
             <div class="columns large-12 ctp-warning checks">
                 Please be aware that this page will not be shown if you turn off debug mode unless you replace src/Template/Pages/home.ctp with your own version...
+                
             </div>
             <?php Debugger::checkSecurityKeys(); ?>
             <div id="url-rewriting-warning" class="columns large-12 url-rewriting checks">
