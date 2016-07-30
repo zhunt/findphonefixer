@@ -10,7 +10,8 @@
         "mobiledetect/mobiledetectlib": "2.*",
         "cakephp/migrations": "~1.0",
         "cakephp/plugin-installer": "*",
-        "league/glide": "^1.0"
+        "league/glide": "^1.0",
+        "league/flysystem": "^1.0"
     },
     "require-dev": {
         "psy/psysh": "@stable",
