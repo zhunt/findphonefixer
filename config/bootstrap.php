@@ -198,6 +198,8 @@ if (Configure::read('debug')) {
     Plugin::load('DebugKit', ['bootstrap' => true]);
 }
 
+Plugin::load('CakeDC/Users', ['routes' => true, 'bootstrap' => true]);
+
 /**
  * Connect middleware/dispatcher filters.
  */
