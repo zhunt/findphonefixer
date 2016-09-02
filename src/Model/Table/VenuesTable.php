@@ -6,6 +6,20 @@ use Cake\ORM\RulesChecker;
 use Cake\ORM\Table;
 use Cake\Validation\Validator;
 
+use Cake\Event\Event;
+
+
+use ArrayObject;
+use Cake\Database\Expression\QueryExpression;
+use Cake\Datasource\ConnectionManager;
+
+use Cake\Event\EventManagerTrait;
+
+use Cake\ORM\Entity;
+
+use Cake\Database\Schema\Table as Schema;
+
+
 /**
  * Venues Model
  *
@@ -219,8 +233,29 @@ class VenuesTable extends Table
         $rules->add($rules->existsIn(['city_id'], 'Cities'));
         $rules->add($rules->existsIn(['neighbourhood_id'], 'Neighbourhoods'));
         $rules->add($rules->existsIn(['establishment_type_id'], 'EstablishmentTypes'));
-        $rules->add($rules->existsIn(['inside_venue_id'], 'InsideVenues'));
+        //$rules->add($rules->existsIn(['inside_venue_id'], 'Venues'));
 
         return $rules;
     }
+
+
+    public function beforeSave($event, $entity, $options) { debug($entity); 
+        if (isset($entity['latitude']) && isset($entity['longitude'])) {
+            $entity->geo_cords = new QueryExpression("GeomFromText('POINT(" . $entity['longitude'] . ' ' . $entity['latitude'] . ")')"); // "GeomFromText( POINT(-2.2371147 53.4773477 ) )"
+        }
+        unset($entity['latitude']);
+        unset($entity['longitude']);
+    }
+
+/*
+    public function beforeSave($event, $entity, $options)
+    {
+        if ($entity->tag_string) {
+            $entity->tags = $this->_buildTags($entity->tag_string);
+        }
+    }
+*/
+
 }
+
+

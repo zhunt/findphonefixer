@@ -19,7 +19,7 @@ class VenuesController extends AppController
     public function index()
     {
         $this->paginate = [
-            'contain' => ['Provinces', 'Countries', 'Cities', 'Neighbourhoods', 'EstablishmentTypes']
+           // 'contain' => ['Provinces', 'Countries', 'Cities', 'Neighbourhoods', 'EstablishmentTypes']
         ];
         $venues = $this->paginate($this->Venues);
 
@@ -36,9 +36,46 @@ class VenuesController extends AppController
      */
     public function view($id = null)
     {
-        $venue = $this->Venues->get($id, [
-            'contain' => ['Provinces', 'Countries', 'Cities', 'Neighbourhoods', 'EstablishmentTypes', 'Amenities', 'Cuisines', 'Features', 'VenuePhotos']
-        ]);
+        $venue = $this->Venues->find('all');
+            //'contain' => ['Provinces', 'Countries', 'Cities', 'Neighbourhoods', 'EstablishmentTypes', 
+            //                'Amenities', 'Cuisines', 'Features', 'VenuePhotos'],
+            //                'where' => ['Venue.id' => $id ], 
+           // 'select' => ['cords' =>  $venue->func()->ST_AsText('Venue.geo_cords') ]       
+      //  ]);
+
+        $concat = $venue->func()->ST_AsText('Venue.geo_cords');
+
+        $venue->select(['new_cords' => $concat]);
+
+
+        $query = $this->Venues->find();
+$lev = $query->func()->levenshtein([$search, 'LOWER(title)' => 'literal']);
+$query->where(function ($exp) use ($lev) {
+    return $exp->between($lev, 0, $tolerance);
+});
+
+// Generated SQL would be
+WHERE levenshtein(:c0, lower(street)) BETWEEN :c1 AND :c2
+
+
+
+
+       // $venue->select(['cords' =>  $venue->func()->ST_AsText('Venue.geo_cords') ]);
+
+        //->select(['slug' => $query->func()->concat(['title', '-', 'id'])])
+/*
+$query = $articles->find()->innerJoinWith('Categories');
+$concat = $query->func()->concat([
+    'Articles.title' => 'identifier',
+    ' - CAT: ',
+    'Categories.name' => 'identifier',
+    ' - Age: ',
+    '(DATEDIFF(NOW(), Articles.created))' => 'literal',
+]);
+$query->select(['link_title' => $concat]);
+
+*/
+
 
         $this->set('venue', $venue);
         $this->set('_serialize', ['venue']);
@@ -78,7 +115,53 @@ class VenuesController extends AppController
 
     /*
     * Add just basics of venue 
+    * @return \Cake\Network\Response|void Redirects on successful add, renders view otherwise.
     */
+    public function quickAdd()
+    {
+        $this->loadComponent('Geocode');
+
+        $venue = $this->Venues->newEntity();
+        if ($this->request->is('post')) {
+
+            // first lets get the address data
+            // https://maps.googleapis.com/maps/api/geocode/json?address=
+
+            //debug( $this->request->data['address'] ); // exit;
+
+            $geoData = $this->Geocode->geocodeAdress( $this->request->data['address'] );
+
+            $this->request->data['address'] = $geoData['address'];
+           // $this->request->data['geo_cords'] = $geoData['lnglat'];
+
+
+           // $this->request->data['geo_cords'] = (object) $db->expression("GeomFromText('POINT(" . $geoData['lnglat'] . ")')");
+
+            $this->request->data['latitude'] = $geoData['latitude']; // 53.4773477;
+            $this->request->data['longitude'] = $geoData['longitude']; //-2.2371147;
+
+
+
+
+            //debug($this->request->data);
+
+
+            $venue = $this->Venues->patchEntity($venue, $this->request->data);
+
+           debug($venue); 
+            if ($this->Venues->save($venue)) {
+                $this->Flash->success(__('The venue has been saved.'));
+
+                exit;
+                return $this->redirect(['action' => 'index']);
+            } else {
+                $this->Flash->error(__('The venue could not be saved. Please, try again.'));
+            }
+        }
+
+         $this->set(compact('venue'));
+    }
+
 
     /**
      * Edit method
